@@ -1,22 +1,20 @@
-import 'package:appchat/screens/login.dart';
+import 'package:appchat/services/account_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_config/flutter_config.dart';
+import 'package:provider/provider.dart';
 
-void main() {
-  runApp(const AppChat());
+import 'app.dart';
+
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await FlutterConfig.loadEnvVariables();
+
+  runApp(ChangeNotifierProvider.value(
+    value: AccountService.instance,
+    child: const AppChat(),
+  ));
 }
 
-class AppChat extends StatelessWidget {
-  const AppChat({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Nhắn tin',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
-        useMaterial3: true,
-      ),
-      home: const Login(),
-    );
-  }
-}

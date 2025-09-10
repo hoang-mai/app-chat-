@@ -1,18 +1,44 @@
-import 'package:flutter/material.dart';
-import 'login.dart';
+import 'package:appchat/utils/base_response.dart';
+import 'package:appchat/api_endpoint.dart';
+import 'package:appchat/services/api_service.dart';
+import 'package:appchat/utils/fn_common.dart';
 
-class Register extends StatefulWidget {
-  const Register({super.key});
+import '../models/login_response.dart';
+import 'register_screen.dart';
+import 'package:flutter/material.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<Register> createState() => _RegisterState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _RegisterState extends State<Register> {
+class _LoginScreenState extends State<LoginScreen> {
   bool _isShowPassword = false;
   String _username = '';
   String _password = '';
+  String _errorMessage = '';
+  bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
+
+  void login() async {
+    BaseResponse<LoginResponse> baseResponse =
+        await ApiService.instance.postApi(
+            ApiEndpoint.login,
+            {
+              'username': _username,
+              'password': _password,
+            },
+            LoginResponse.fromJson);
+    if (FnCommon.isResponseClientSuccess(baseResponse.statusCode)) {
+      //
+    } else if(FnCommon.isResponseClientError(baseResponse.statusCode)) {
+      setState(() {
+        _errorMessage = baseResponse.message;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +69,7 @@ class _RegisterState extends State<Register> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    'Đăng ký',
+                    'Đăng nhập',
                     style: TextStyle(fontSize: 30, color: Colors.black),
                   ),
                   const SizedBox(width: 10, height: 50),
@@ -89,8 +115,8 @@ class _RegisterState extends State<Register> {
                                 labelText: "Mật khẩu",
                                 prefixIcon: const Icon(Icons.lock),
                                 border: const OutlineInputBorder(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(20))),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(20))),
                                 enabledBorder: OutlineInputBorder(
                                   borderSide: const BorderSide(
                                       color: Colors.green, width: 2),
@@ -130,11 +156,28 @@ class _RegisterState extends State<Register> {
                           ),
                           const SizedBox(height: 20),
                           ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                _formKey.currentState!.save();
-                              }
-                            },
+                            onPressed: _isLoading
+                                ? null
+                                : () {
+                                    if (_formKey.currentState!.validate()) {
+                                      _formKey.currentState!.save();
+                                      setState(() {
+                                        _isLoading = true;
+                                        _errorMessage = '';
+                                      });
+                                      try {
+                                        login();
+                                      } catch (e) {
+                                        setState(() {
+                                          _errorMessage = 'Đăng nhập thất bại';
+                                        });
+                                      } finally {
+                                        setState(() {
+                                          _isLoading = false;
+                                        });
+                                      }
+                                    }
+                                  },
                             style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 50, vertical: 15),
@@ -145,24 +188,35 @@ class _RegisterState extends State<Register> {
                             child: const Text(
                               'Đăng nhập',
                               style:
-                              TextStyle(fontSize: 15, color: Colors.white),
+                                  TextStyle(fontSize: 15, color: Colors.white),
                             ),
-                          )
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ),
+                          Text(
+                            _errorMessage,
+                            style: const TextStyle(
+                              color: Colors.red,
+                              fontSize: 14,
+                            ),
+                          ),
                         ],
                       )),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Bạn đã có tài khoản?'),
+                      const Text('Bạn chưa có tài khoản?'),
                       TextButton(
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) {
-                            return const Login();
+                          Navigator.push(context,
+                              MaterialPageRoute(builder: (context) {
+                            return const RegisterScreen();
                           }));
                         },
                         child: const Text(
-                          'Đăng nhập',
+                          'Đăng ký',
                           style: TextStyle(
                             color: Colors.green,
                             decoration: TextDecoration.underline,
